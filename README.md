@@ -13,6 +13,12 @@ A simple PNaCl app (in Rust!) that prints "Hello, world!" as an error on the bro
 * [Pepper SDK](https://developer.chrome.com/native-client/sdk/download)
   * I recommend installing the ```pepper_canary``` version of pepper.
 
+### Prep
+
+```bash
+git submodule update --init
+```
+
 ## Cooking and Serving
 
 * Run ```make SYSROOT=path/to/rust/build NACL_SDK=path/to/pepper serve```
