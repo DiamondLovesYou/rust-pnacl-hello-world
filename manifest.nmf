@@ -1,0 +1,12 @@
+{
+  "program": {
+    "portable": {
+      "pnacl-translate": {
+        "url": "build/main.pexe"
+      }
+    },
+    "x86-64": {
+      "url": "build/main.nexe"
+    }
+  }
+}
