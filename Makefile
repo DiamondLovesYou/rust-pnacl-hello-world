@@ -13,14 +13,14 @@ $(error I need the directory to your Pepper SDK!)
 endif
 endif
 
-USE_DEBUG ?= 0
-RUSTFLAGS += -C cross-path=$(NACL_SDK) -C nacl-flavor=pnacl --target=le32-unknown-nacl -L $(RUST_HTTP) --sysroot=$(shell readlink -f $(SYSROOT))
-TOOLCHAIN ?= $(NACL_SDK)/toolchain/linux_pnacl
-
 # deps
 RUST_HTTP    ?= $(shell readlink -f deps/http)
 RUST_OPENSSL ?= $(shell readlink -f deps/openssl)
 RUST_PPAPI   ?= $(shell readlink -f deps/ppapi)
+
+USE_DEBUG ?= 0
+RUSTFLAGS += -C cross-path=$(NACL_SDK) -C nacl-flavor=pnacl --target=le32-unknown-nacl -L $(RUST_HTTP)/build --sysroot=$(shell readlink -f $(SYSROOT))
+TOOLCHAIN ?= $(NACL_SDK)/toolchain/linux_pnacl
 
 ifeq ($(USE_DEBUG),0)
 RUSTFLAGS += -O --cfg ndebug -C stable-pexe
