@@ -59,36 +59,15 @@ build/main.nexe: build/main.pexe
 
 # deps
 
-$(RUST_HTTP)/Makefile: $(RUST_HTTP)/configure $(RUST_HTTP)/Makefile.in Makefile
-	cd $(RUST_HTTP); \
-	./configure
-
-deps/http.stamp: 	$(RUST_HTTP)/Makefile deps/openssl.stamp \
-		$(call rwildcard,$(RUST_HTTP),*rs) \
-		$(RUSTC)
-	cd $(RUST_HTTP); \
-	RUSTC="$(RUSTC)" RUSTFLAGS="$(RUSTFLAGS) -L $(RUST_OPENSSL)/target" $(MAKE) SYSROOT=$(shell readlink -f $(SYSROOT))
-	touch $@
-
-$(RUST_OPENSSL)/Makefile: $(RUST_OPENSSL)/configure $(RUST_OPENSSL)/Makefile.in Makefile
-	cd $(RUST_OPENSSL); \
-	./configure
-
-deps/openssl.stamp:	$(RUST_OPENSSL)/Makefile \
-		$(call rwildcard,$(RUST_OPENSSL),*rs) \
-		$(RUSTC)
-	cd $(RUST_OPENSSL); \
-	RUSTC="$(RUSTC)" RUSTFLAGS="$(filter-out -O,$(RUSTFLAGS))" $(MAKE) -C $(RUST_OPENSSL)
-	touch $@
-
-deps/ppapi.stamp: deps/http.stamp \
-		  $(RUST_PPAPI)/Makefile \
+deps/ppapi.stamp: $(RUST_PPAPI)/Makefile \
 		  $(call rwildcard,$(RUST_PPAPI),*rs) \
-		  $(RUSTC)
-	make -C $(RUST_PPAPI)                  \
+		  $(call rwildcard,$(RUST_HTTP),*rs) \
+		  $(call rwildcard,$(RUST_OPENSSL),*rs) \
+		  $(RUSTC) | $(BUILD_DIR)
+	$(MAKE) -C $(RUST_PPAPI)               \
 		RUSTC="$(RUSTC)"               \
 		SYSROOT="$(SYSROOT)"           \
 		NACL_SDK="$(NACL_SDK)"         \
 		RUST_HTTP="$(RUST_HTTP)"       \
-		RUST_OPENSSL="$(RUST_OPENSSL)"
-	touch $@
+		RUST_OPENSSL="$(RUST_OPENSSL)" \
+		BUILD_DIR="$(BUILD_DIR)"
