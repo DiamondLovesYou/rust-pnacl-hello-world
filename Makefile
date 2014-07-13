@@ -34,6 +34,11 @@ rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subs
 
 .DEFAULT_GOAL := all
 
+BUILD_DIR ?= $(abspath build)
+
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
+
 all: build/main.pexe serve
 
 clean:
@@ -46,8 +51,8 @@ serve: build/main.pexe
 	$(NACL_SDK)/tools/http.py --serve-dir . --port=$(PORT) &
 	www-browser "http://localhost:$(PORT)/$(INDEX_FILE)"
 
-build/main.pexe: main.rs Makefile deps/ppapi.stamp
-	$(RUSTC) $(RUSTFLAGS) -o $@ $< -L $(RUST_PPAPI)/build -L $(RUST_HTTP)/build -L $(RUST_OPENSSL)/build -L $(TOOLCHAIN)/sdk/lib
+build/main.pexe: main.rs Makefile deps/ppapi.stamp | $(BUILD_DIR)
+	$(RUSTC) $(RUSTFLAGS) -o $(abspath $@) $< -L $(RUST_PPAPI)/build -L $(RUST_HTTP)/target -L $(RUST_OPENSSL)/target -L $(TOOLCHAIN)/sdk/lib
 
 build/main.nexe: build/main.pexe
 	$(TOOLCHAIN)/bin/pnacl-translate --allow-llvm-bitcode -arch x86_64 -o $@ $<
@@ -58,21 +63,22 @@ $(RUST_HTTP)/Makefile: $(RUST_HTTP)/configure $(RUST_HTTP)/Makefile.in Makefile
 	cd $(RUST_HTTP); \
 	./configure
 
-deps/http.stamp: $(RUST_HTTP)/Makefile deps/openssl.stamp \
-		 $(call rwildcard,$(RUST_HTTP),*rs) \
-		 $(RUSTC)
-	make -C $(RUST_HTTP) clean
-	RUSTC="$(RUSTC)" RUSTFLAGS="$(RUSTFLAGS)" make -C $(RUST_HTTP)
+deps/http.stamp: 	$(RUST_HTTP)/Makefile deps/openssl.stamp \
+		$(call rwildcard,$(RUST_HTTP),*rs) \
+		$(RUSTC)
+	cd $(RUST_HTTP); \
+	RUSTC="$(RUSTC)" RUSTFLAGS="$(RUSTFLAGS) -L $(RUST_OPENSSL)/target" $(MAKE) SYSROOT=$(shell readlink -f $(SYSROOT))
 	touch $@
 
 $(RUST_OPENSSL)/Makefile: $(RUST_OPENSSL)/configure $(RUST_OPENSSL)/Makefile.in Makefile
 	cd $(RUST_OPENSSL); \
 	./configure
 
-deps/openssl.stamp: $(RUST_OPENSSL)/Makefile \
-		    $(call rwildcard,$(RUST_OPENSSL),*rs) \
-		    $(RUSTC)
-	RUSTC="$(RUSTC)" RUSTFLAGS="$(filter-out -O,$(RUSTFLAGS))" make -C $(RUST_OPENSSL)
+deps/openssl.stamp:	$(RUST_OPENSSL)/Makefile \
+		$(call rwildcard,$(RUST_OPENSSL),*rs) \
+		$(RUSTC)
+	cd $(RUST_OPENSSL); \
+	RUSTC="$(RUSTC)" RUSTFLAGS="$(filter-out -O,$(RUSTFLAGS))" $(MAKE) -C $(RUST_OPENSSL)
 	touch $@
 
 deps/ppapi.stamp: deps/http.stamp \
