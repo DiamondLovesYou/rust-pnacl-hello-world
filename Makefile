@@ -42,6 +42,7 @@ $(BUILD_DIR):
 all: build/main.pexe serve
 
 clean:
+	$(MAKE) -C $(RUST_PPAPI) clean
 	touch Makefile
 
 
