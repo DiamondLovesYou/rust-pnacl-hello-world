@@ -4,6 +4,8 @@ $(error I need the sysroot to your Rust build)
 endif
 endif
 
+SYSROOT := $(abspath $(SYSROOT))
+
 RUSTC ?= $(shell readlink -f $(SYSROOT)/bin/rustc)
 NACL_SDK  ?= $(shell readlink -f ~/workspace/tools/nacl-sdk/pepper_canary)
 
