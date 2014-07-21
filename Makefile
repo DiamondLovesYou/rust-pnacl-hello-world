@@ -51,8 +51,8 @@ clean:
 PORT ?= 5103
 .PHONY += serve
 serve: build/main.pexe
-	$(NACL_SDK)/tools/http.py --serve-dir . --port=$(PORT) &
-	www-browser "http://localhost:$(PORT)/$(INDEX_FILE)"
+	$(NACL_SDK)/tools/httpd.py --serve-dir . --port=$(PORT) --no-dir-check &
+	google-chrome "http://localhost:$(PORT)/$(INDEX_FILE)"
 
 build/main.pexe: main.rs Makefile deps/ppapi.stamp | $(BUILD_DIR)
 	$(RUSTC) $(RUSTFLAGS) -o $(abspath $@) $< -L $(RUST_PPAPI)/build -L $(RUST_HTTP)/target -L $(RUST_OPENSSL)/target -L $(TOOLCHAIN)/sdk/lib
