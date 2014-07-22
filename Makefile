@@ -7,6 +7,8 @@ endif
 SYSROOT := $(abspath $(SYSROOT))
 
 RUSTC ?= $(shell readlink -f $(SYSROOT)/bin/rustc)
+RUST_PNACL_TRANS ?= $(abspath $(SYSROOT)/bin/rust-pnacl-trans)
+
 NACL_SDK  ?= $(shell readlink -f ~/workspace/tools/nacl-sdk/pepper_canary)
 
 ifneq ($(MAKECMDGOALS),clean)
@@ -27,9 +29,11 @@ TOOLCHAIN ?= $(NACL_SDK)/toolchain/linux_pnacl
 ifeq ($(USE_DEBUG),0)
 RUSTFLAGS += -O --cfg ndebug -C stable-pexe
 INDEX_FILE := index.html
+build/main = build/main.pexe
 else
 RUSTFLAGS += --debuginfo=2 -Z no-opt
 INDEX_FILE := index.debug.html
+build/main = build/main.nexe
 endif
 
 rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
@@ -50,15 +54,15 @@ clean:
 
 PORT ?= 5103
 .PHONY += serve
-serve: build/main.pexe
+serve: build/main
 	$(NACL_SDK)/tools/httpd.py --serve-dir . --port=$(PORT) --no-dir-check &
 	google-chrome "http://localhost:$(PORT)/$(INDEX_FILE)"
 
-build/main.pexe: main.rs Makefile deps/ppapi.stamp | $(BUILD_DIR)
+build/main.pexe: main.rs $(RUSTC) Makefile deps/ppapi.stamp | $(BUILD_DIR)
 	$(RUSTC) $(RUSTFLAGS) -o $(abspath $@) $< -L $(RUST_PPAPI)/build -L $(RUST_HTTP)/target -L $(RUST_OPENSSL)/target -L $(TOOLCHAIN)/sdk/lib
 
-build/main.nexe: build/main.pexe
-	$(TOOLCHAIN)/bin/pnacl-translate --allow-llvm-bitcode -arch x86_64 -o $@ $<
+build/main.nexe: $(RUST_PNACL_TRANS) build/main.pexe
+	$(RUST_PNACL_TRANS) -o $(abspath $@) $< --cross-path=$(NACL_SDK)
 
 # deps
 
