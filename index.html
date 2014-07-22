@@ -82,10 +82,11 @@
         var embed = document.createElement('embed');
         if(location.pathname == "/index.html") {
           embed.setAttribute('src', 'manifest.nmf');
+          embed.setAttribute('type', 'application/x-pnacl');
         } else {
           embed.setAttribute('src', 'debug.nmf');
+          embed.setAttribute('type', 'application/x-nacl');
         }
-        embed.setAttribute('type', 'application/x-pnacl');
 
         var listener = document.getElementById('listener');
         listener.addEventListener('load', moduleDidLoad, true);
