@@ -1,1 +1,10 @@
-manifest.nmf
+{
+  "program": {
+    "x86-64": {
+      "url": "build/main.nexe"
+    },
+    "x86": {
+      "url": "build/main.nexe"
+    }
+  }
+}
