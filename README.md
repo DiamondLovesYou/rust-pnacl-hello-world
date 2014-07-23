@@ -1,6 +1,6 @@
 # PNaCl says Hi with Rust
 
-A simple PNaCl app (in Rust!) that prints "Hello, world!" as an error on the browser's developer console.
+A simple PNaCl app (in Rust!) that prints "Hello, world!" on the browser's developer console.
 
 # Taste Testing
 
@@ -23,7 +23,8 @@ git submodule update --init
 
 * Run ```make SYSROOT=path/to/rust/build NACL_SDK=path/to/pepper serve```
 
+After its finished building, it'll open a new browser window!
+
 ### Note:
 
-1. You will see a number of warnings. This is normal, and is being worked on.
-2. The build will take longer than what the amount of source would otherwise indicate. This is also normal, and is also being worked on.
+The build will take longer than what the amount of source would otherwise indicate. This is normal, and is a result of the way the PNaCl IR legalization works (it's basically LTO).
