@@ -26,49 +26,55 @@ USE_DEBUG ?= 0
 RUSTFLAGS += -C cross-path=$(NACL_SDK) -C nacl-flavor=pnacl --target=le32-unknown-nacl -L $(RUST_HTTP)/build --sysroot=$(shell readlink -f $(SYSROOT))
 TOOLCHAIN ?= $(NACL_SDK)/toolchain/linux_pnacl
 
+BUILD_DIR ?= $(abspath build)
+
 ifeq ($(USE_DEBUG),0)
 
-RUSTFLAGS += -O --cfg ndebug -C stable-pexe
+RUSTFLAGS += -O --cfg ndebug
 INDEX_FILE := index.html
 
-build/main: build/main.pexe
+MAIN_TARGET := $(BUILD_DIR)/main.pexe
 
 else
 
 RUSTFLAGS += --debuginfo=2 -Z no-opt
 INDEX_FILE := index.debug.html
 
-build/main: build/main.nexe
+MAIN_TARGET := $(BUILD_DIR)/main.nexe
 
 endif
+
+PORT ?= 5103
 
 rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
 
 .DEFAULT_GOAL := all
 
-BUILD_DIR ?= $(abspath build)
-
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
-all: build/main.pexe serve
+all: $(BUILD_DIR)/main.pexe $(BUILD_DIR)/main.nexe
 
 clean:
 	$(MAKE) -C $(RUST_PPAPI) clean
 	touch Makefile
 
+http_server.pid:
+	bozohttpd -b -I $(PORT) -P $@ ./.; sleep 1s
 
-PORT ?= 5103
 .PHONY += serve
-serve: build/main
-	$(NACL_SDK)/tools/httpd.py --serve-dir . --port=$(PORT) --no-dir-check &
+serve: $(MAIN_TARGET) | http_server.pid
 	google-chrome "http://localhost:$(PORT)/$(INDEX_FILE)"
 
-build/main.pexe: main.rs $(RUSTC) Makefile deps/ppapi.stamp | $(BUILD_DIR)
-	$(RUSTC) $(RUSTFLAGS) -o $(abspath $@) $< -L $(RUST_PPAPI)/build -L $(RUST_HTTP)/target -L $(RUST_OPENSSL)/target -L $(TOOLCHAIN)/sdk/lib
+$(BUILD_DIR)/main: main.rs $(RUSTC) Makefile deps/ppapi.stamp | $(BUILD_DIR)
+	$(RUSTC) $(RUSTFLAGS) --out-dir $(BUILD_DIR) $< -L $(RUST_PPAPI)/build -L $(RUST_HTTP)/target \
+		-L $(RUST_OPENSSL)/target -L $(TOOLCHAIN)/sdk/lib --emit=link,bc -C stable-pexe
 
-build/main.nexe: build/main.pexe $(RUST_PNACL_TRANS)
-	$(RUST_PNACL_TRANS) -o $(abspath $@) $< --cross-path=$(NACL_SDK)
+$(BUILD_DIR)/main.pexe: $(BUILD_DIR)/main
+	cp $< $@
+
+$(BUILD_DIR)/main.nexe: $(BUILD_DIR)/main $(RUST_PNACL_TRANS)
+	$(RUST_PNACL_TRANS) -o $@ $<.bc --cross-path=$(NACL_SDK)
 
 # deps
 
