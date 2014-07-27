@@ -27,18 +27,17 @@ RUSTFLAGS += -C cross-path=$(NACL_SDK) -C nacl-flavor=pnacl --target=le32-unknow
 TOOLCHAIN ?= $(NACL_SDK)/toolchain/linux_pnacl
 
 BUILD_DIR ?= $(abspath build)
+INDEX_FILE ?= index.html
 
 ifeq ($(USE_DEBUG),0)
 
 RUSTFLAGS += -O --cfg ndebug
-INDEX_FILE := index.html
 
 MAIN_TARGET := $(BUILD_DIR)/main.pexe
 
 else
 
 RUSTFLAGS += --debuginfo=2 -Z no-opt
-INDEX_FILE := index.debug.html
 
 MAIN_TARGET := $(BUILD_DIR)/main.nexe
 
@@ -66,15 +65,11 @@ http_server.pid:
 serve: $(MAIN_TARGET) | http_server.pid
 	google-chrome "http://localhost:$(PORT)/$(INDEX_FILE)"
 
-$(BUILD_DIR)/main: main.rs $(RUSTC) Makefile deps/ppapi.stamp | $(BUILD_DIR)
-	$(RUSTC) $(RUSTFLAGS) --out-dir $(BUILD_DIR) $< -L $(RUST_PPAPI)/build -L $(RUST_HTTP)/target \
-		-L $(RUST_OPENSSL)/target -L $(TOOLCHAIN)/sdk/lib --emit=link,bc -C stable-pexe
+$(BUILD_DIR)/main.pexe: main.rs $(RUSTC) Makefile deps/ppapi.stamp | $(BUILD_DIR)
+	$(RUSTC) $(RUSTFLAGS) --out-dir $(BUILD_DIR) $< -L $(BUILD_DIR) -L $(TOOLCHAIN)/sdk/lib --emit=link,bc -C stable-pexe
 
-$(BUILD_DIR)/main.pexe: $(BUILD_DIR)/main
-	cp $< $@
-
-$(BUILD_DIR)/main.nexe: $(BUILD_DIR)/main $(RUST_PNACL_TRANS)
-	$(RUST_PNACL_TRANS) -o $@ $<.bc --cross-path=$(NACL_SDK)
+$(BUILD_DIR)/main.nexe: $(BUILD_DIR)/main.pexe $(RUST_PNACL_TRANS)
+	$(RUST_PNACL_TRANS) -o $@ $(patsubst %.pexe,%.bc,$<) --cross-path=$(NACL_SDK)
 
 # deps
 
@@ -89,4 +84,5 @@ deps/ppapi.stamp: $(RUST_PPAPI)/Makefile \
 		NACL_SDK="$(NACL_SDK)"         \
 		RUST_HTTP="$(RUST_HTTP)"       \
 		RUST_OPENSSL="$(RUST_OPENSSL)" \
-		BUILD_DIR="$(BUILD_DIR)"
+		BUILD_DIR="$(BUILD_DIR)"       \
+		USE_DEBUG=$(USE_DEBUG)
