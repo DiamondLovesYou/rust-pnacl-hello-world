@@ -23,7 +23,7 @@ RUST_OPENSSL ?= $(shell readlink -f deps/openssl)
 RUST_PPAPI   ?= $(shell readlink -f deps/ppapi)
 
 USE_DEBUG ?= 0
-RUSTFLAGS += -C cross-path=$(NACL_SDK) -C nacl-flavor=pnacl --target=le32-unknown-nacl -L $(RUST_HTTP)/build --sysroot=$(shell readlink -f $(SYSROOT))
+RUSTFLAGS += -C cross-path=$(NACL_SDK) --target=le32-unknown-nacl -L $(RUST_HTTP)/build --sysroot=$(shell readlink -f $(SYSROOT))
 TOOLCHAIN ?= $(NACL_SDK)/toolchain/linux_pnacl
 
 BUILD_DIR ?= $(abspath build)
