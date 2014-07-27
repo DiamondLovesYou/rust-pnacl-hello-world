@@ -52,7 +52,7 @@ rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subs
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
-all: $(BUILD_DIR)/main.pexe $(BUILD_DIR)/main.nexe
+all: $(BUILD_DIR)/pnacl-hello-world.pexe $(BUILD_DIR)/pnacl-hello-world.nexe
 
 clean:
 	$(MAKE) -C $(RUST_PPAPI) clean
@@ -65,10 +65,10 @@ http_server.pid:
 serve: $(MAIN_TARGET) | http_server.pid
 	google-chrome "http://localhost:$(PORT)/$(INDEX_FILE)"
 
-$(BUILD_DIR)/main.pexe: main.rs $(RUSTC) Makefile deps/ppapi.stamp | $(BUILD_DIR)
+$(BUILD_DIR)/pnacl-hello-world.pexe: main.rs $(RUSTC) Makefile deps/ppapi.stamp | $(BUILD_DIR)
 	$(RUSTC) $(RUSTFLAGS) --out-dir $(BUILD_DIR) $< -L $(BUILD_DIR) -L $(TOOLCHAIN)/sdk/lib --emit=link,bc -C stable-pexe
 
-$(BUILD_DIR)/main.nexe: $(BUILD_DIR)/main.pexe $(RUST_PNACL_TRANS)
+$(BUILD_DIR)/pnacl-hello-world.nexe: $(BUILD_DIR)/pnacl-hello-world.pexe $(RUST_PNACL_TRANS)
 	$(RUST_PNACL_TRANS) -o $@ $(patsubst %.pexe,%.bc,$<) --cross-path=$(NACL_SDK)
 
 # deps

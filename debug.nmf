@@ -1,10 +1,10 @@
 {
   "program": {
     "x86-64": {
-      "url": "build/main.nexe"
+      "url": "build/pnacl-hello-world.nexe"
     },
     "x86": {
-      "url": "build/main.nexe"
+      "url": "build/pnacl-hello-world.nexe"
     }
   }
 }
