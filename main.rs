@@ -1,4 +1,4 @@
-#![crate_id(name = "pnacl-hello-world", vers = "0.0")]
+#![crate_name = "pnacl-hello-world"]
 #![crate_type = "bin"]
 #![no_main]
 
