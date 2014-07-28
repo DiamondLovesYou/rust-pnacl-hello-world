@@ -33,13 +33,13 @@ ifeq ($(USE_DEBUG),0)
 
 RUSTFLAGS += -O --cfg ndebug
 
-MAIN_TARGET := $(BUILD_DIR)/main.pexe
+MAIN_TARGET := $(BUILD_DIR)/pnacl-hello-world.pexe
 
 else
 
 RUSTFLAGS += --debuginfo=2 -Z no-opt
 
-MAIN_TARGET := $(BUILD_DIR)/main.nexe
+MAIN_TARGET := $(BUILD_DIR)/pnacl-hello-world.nexe
 
 endif
 
