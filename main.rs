@@ -8,12 +8,14 @@ use std::collections::hashmap::HashMap;
 
 #[no_mangle]
 #[cfg(target_os = "nacl")]
-// Called when an instance is created. Return a boxed trait for your callbacks.
+// Called when an instance is created.
+// This is called from a new task. It is perfectly "safe" to fail!() here, or in
+// any callback (though it will result in instance termination).
 pub extern fn ppapi_instance_created(_instance: ppapi::Instance,
-                                     _args: || -> HashMap<String, String>) -> Box<ppapi::InstanceCallbacks> {
+                                     _args: HashMap<String, String>) {
     println!("Hello, world!");
-    box NoOpt as Box<ppapi::InstanceCallbacks>
 }
 
-struct NoOpt;
-impl ppapi::InstanceCallbacks for NoOpt { }
+#[no_mangle]
+pub extern fn ppapi_instance_destroyed() {
+}
