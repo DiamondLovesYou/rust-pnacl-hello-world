@@ -9,7 +9,8 @@ SYSROOT := $(abspath $(SYSROOT))
 RUSTC ?= $(shell readlink -f $(SYSROOT)/bin/rustc)
 RUST_PNACL_TRANS ?= $(shell readlink -f $(SYSROOT)/bin/rust-pnacl-trans)
 
-NACL_SDK  ?= $(shell readlink -f ~/workspace/tools/nacl-sdk/pepper_canary)
+NACL_SDK  ?= ~/workspace/tools/nacl-sdk/pepper_canary
+NACL_SDK  := $(shell readlink -f $(NACL_SDK))
 
 ifneq ($(MAKECMDGOALS),clean)
 ifeq  ($(NACL_SDK),)
