@@ -7,7 +7,6 @@ extern crate ppapi;
 use std::collections::hashmap::HashMap;
 
 #[no_mangle]
-#[cfg(target_os = "nacl")]
 // Called when an instance is created.
 // This is called from a new task. It is perfectly "safe" to fail!() here, or in
 // any callback (though it will result in instance termination).
