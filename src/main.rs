@@ -4,7 +4,7 @@
 
 extern crate ppapi;
 
-use std::collections::hashmap::HashMap;
+use std::collections::HashMap;
 
 #[no_mangle]
 #[cfg(target_os = "nacl")]
