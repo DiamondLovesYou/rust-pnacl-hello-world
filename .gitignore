@@ -1,3 +1,5 @@
 *.stamp
-build/
+target/
 http_server.port-*.pid
+Cargo.lock
+*~

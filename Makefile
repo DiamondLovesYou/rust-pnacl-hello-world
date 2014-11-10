@@ -9,11 +9,11 @@ SYSROOT := $(abspath $(SYSROOT))
 RUSTC ?= $(shell readlink -f $(SYSROOT)/bin/rustc)
 RUST_PNACL_TRANS ?= $(shell readlink -f $(SYSROOT)/bin/rust-pnacl-trans)
 
-NACL_SDK  ?= $(shell readlink -f ~/workspace/tools/nacl-sdk/pepper_canary)
+NACL_SDK  ?= $(shell readlink -f $(NACL_SDK_ROOT))
 
 ifneq ($(MAKECMDGOALS),clean)
 ifeq  ($(NACL_SDK),)
-$(error I need the directory to your Pepper SDK!)
+$(error I need the directory to your Pepper SDK! Use NACL_SDK_ROOT.)
 endif
 endif
 
