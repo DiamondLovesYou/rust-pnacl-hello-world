@@ -17,6 +17,8 @@ $(error I need the directory to your Pepper SDK! Use NACL_SDK_ROOT.)
 endif
 endif
 
+export LD_LIBRARY_PATH := $(SYSROOT)/lib:$(LD_LIBRARY_PATH)
+
 # deps
 RUST_HTTP    ?= $(shell readlink -f deps/http)
 RUST_OPENSSL ?= $(shell readlink -f deps/openssl)
