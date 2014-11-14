@@ -8,7 +8,7 @@ use std::collections::HashMap;
 
 #[no_mangle]
 // Called when an instance is created.
-// This is called from a new task. It is perfectly "safe" to fail!() here, or in
+// This is called from a new task. It is perfectly "safe" to panic!() here, or in
 // any callback (though it will result in instance termination).
 pub extern fn ppapi_instance_created(_instance: ppapi::Instance,
                                      _args: HashMap<String, String>) {
