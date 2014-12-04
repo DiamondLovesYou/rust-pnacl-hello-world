@@ -1,34 +1,40 @@
-ifneq ($(MAKECMDGOALS),clean)
-ifeq ($(SYSROOT),)
-$(error I need the sysroot to your Rust build)
-endif
-endif
-
+SYSROOT ?= /usr/local
 SYSROOT := $(abspath $(SYSROOT))
 
 RUSTC ?= $(shell readlink -f $(SYSROOT)/bin/rustc)
+CARGO ?= $(shell which cargo)
 RUST_PNACL_TRANS ?= $(shell readlink -f $(SYSROOT)/bin/rust-pnacl-trans)
 
-NACL_SDK  ?= $(shell readlink -f $(NACL_SDK_ROOT))
+NACL_SDK_ROOT  ?= $(shell readlink -f $(NACL_SDK_ROOT))
 
 ifneq ($(MAKECMDGOALS),clean)
-ifeq  ($(NACL_SDK),)
+ifeq  ($(NACL_SDK_ROOT),)
 $(error I need the directory to your Pepper SDK! Use NACL_SDK_ROOT.)
 endif
 endif
 
+export NACL_SDK_ROOT
+
+CC  :=$(shell $(NACL_SDK_ROOT)/tools/nacl_config.py -t pnacl --tool cc)
+CXX :=$(shell $(NACL_SDK_ROOT)/tools/nacl_config.py -t pnacl --tool cxx)
+AR  :=$(shell $(NACL_SDK_ROOT)/tools/nacl_config.py -t pnacl --tool ar)
+export CC
+export CXX
+export AR
+
+VERBOSE ?= 0
+ifeq ($(VERBOSE),1)
+CARGO_BUILD_FLAGS += --verbose
+endif
+
 export LD_LIBRARY_PATH := $(SYSROOT)/lib:$(LD_LIBRARY_PATH)
 
-# deps
-RUST_HTTP    ?= $(shell readlink -f deps/http)
-RUST_OPENSSL ?= $(shell readlink -f deps/openssl)
-RUST_PPAPI   ?= $(shell readlink -f deps/ppapi)
-
 USE_DEBUG ?= 0
-RUSTFLAGS += -C cross-path=$(NACL_SDK) --target=le32-unknown-nacl --sysroot=$(shell readlink -f $(SYSROOT))
-TOOLCHAIN ?= $(NACL_SDK)/toolchain/linux_pnacl
+TOOLCHAIN ?= $(NACL_SDK_ROOT)/toolchain/linux_pnacl
 
-BUILD_DIR ?= $(abspath build)
+TARGET = le32-unknown-nacl
+
+BUILD_DIR := $(abspath target)/$(TARGET)
 INDEX_FILE ?= index.html
 
 ifeq ($(USE_DEBUG),0)
@@ -53,13 +59,10 @@ rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subs
 
 .DEFAULT_GOAL := all
 
-$(BUILD_DIR):
-	mkdir -p $(BUILD_DIR)
-
 all: $(BUILD_DIR)/pnacl-hello-world.pexe $(BUILD_DIR)/pnacl-hello-world.nexe
 
 clean:
-	$(MAKE) -C $(RUST_PPAPI) clean
+	$(CARGO) clean
 	touch Makefile
 
 $(BOZOHTTPD_PID):
@@ -69,27 +72,12 @@ $(BOZOHTTPD_PID):
 serve: $(MAIN_TARGET) | $(BOZOHTTPD_PID)
 	google-chrome "http://localhost:$(PORT)/$(INDEX_FILE)"
 
-$(BUILD_DIR)/pnacl-hello-world.pexe: $(BUILD_DIR)/pnacl-hello-world.stamp
+$(BUILD_DIR)/pnacl-hello-world.pexe: $(BUILD_DIR)/pnacl-hello-world.stamp | $(BUILD_DIR)/pnacl-hello-world.nexe
 	$(TOOLCHAIN)/bin/pnacl-compress $@
 
-$(BUILD_DIR)/pnacl-hello-world.stamp: main.rs $(RUSTC) Makefile deps/ppapi.stamp | $(BUILD_DIR)
-	$(RUSTC) $(RUSTFLAGS) --out-dir $(BUILD_DIR) $< -L $(BUILD_DIR) -L $(TOOLCHAIN)/sdk/lib --emit=link,bc -C stable-pexe
+$(BUILD_DIR)/pnacl-hello-world.stamp: src/main.rs $(CARGO) Makefile
+	$(CARGO) build --target $(TARGET) $(CARGO_BUILD_FLAGS)
+	touch $@
 
 $(BUILD_DIR)/pnacl-hello-world.nexe: $(BUILD_DIR)/pnacl-hello-world.pexe $(RUST_PNACL_TRANS)
-	$(RUST_PNACL_TRANS) -o $@ $(patsubst %.pexe,%.bc,$<) --cross-path=$(NACL_SDK)
-
-# deps
-
-deps/ppapi.stamp: $(RUST_PPAPI)/Makefile \
-		  $(call rwildcard,$(RUST_PPAPI),*rs) \
-		  $(call rwildcard,$(RUST_HTTP),*rs) \
-		  $(call rwildcard,$(RUST_OPENSSL),*rs) \
-		  $(RUSTC) | $(BUILD_DIR)
-	$(MAKE) -C $(RUST_PPAPI)               \
-		RUSTC="$(RUSTC)"               \
-		SYSROOT="$(SYSROOT)"           \
-		NACL_SDK="$(NACL_SDK)"         \
-		RUST_HTTP="$(RUST_HTTP)"       \
-		RUST_OPENSSL="$(RUST_OPENSSL)" \
-		BUILD_DIR="$(BUILD_DIR)"       \
-		USE_DEBUG=$(USE_DEBUG)
+	$(RUST_PNACL_TRANS) -o $@ $< --cross-path=$(NACL_SDK_ROOT)
