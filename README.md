@@ -8,22 +8,20 @@ A simple PNaCl app (in Rust!) that prints "Hello, world!" on the browser's devel
 
 ## Ingredients and Prep
 
-* [The PNaCl Rust fork](https://github.com/DiamondLovesYou/rust)
-  * Configure with: ```path/to/rust/configure --target=le32-unknown-nacl --nacl-cross-path=path/to/pepper_canary``` (note [Pepper 34](https://code.google.com/p/chromium/issues/detail?id=343594) and previous have a bug that prevents use of pnacl-translate).
 * [Pepper SDK](https://developer.chrome.com/native-client/sdk/download)
-  * I recommend installing the ```pepper_canary``` version of pepper.
-
-### Prep
-
-```bash
-git submodule update --init
-```
+  * Install ```pepper_37``` from the NaCl SDK.
+* [The PNaCl Rust fork](https://github.com/DiamondLovesYou/rust)
+  * Configure with (*must be out-of-tree*): ```path/to/rust/configure --target=le32-unknown-nacl --nacl-cross-path=path/to/pepper_37```
+* Build Rust (Nightlies comming Soon(TM)):
+  * ```$ make -j 4```
+* Install:
+  * ```$ sudo make install```
 
 ## Cooking and Serving
 
-* Run ```make SYSROOT=path/to/rust/build NACL_SDK=path/to/pepper serve```
+* Run ```make NACL_SDK_ROOT=path/to/pepper serve```
 
-After its finished building, it'll open a new browser window!
+After its finished building, it'll open a new tab in Chrome!
 
 ### Note:
 
