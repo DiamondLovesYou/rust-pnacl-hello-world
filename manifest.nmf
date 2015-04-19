@@ -2,7 +2,7 @@
   "program": {
     "portable": {
       "pnacl-translate": {
-        "url": "target/le32-unknown-nacl/pnacl-hello-world.pexe"
+        "url": "target/le32-unknown-nacl/release/pnacl-hello-world.pexe"
       }
     }
   }

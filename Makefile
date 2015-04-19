@@ -3,7 +3,7 @@ SYSROOT := $(abspath $(SYSROOT))
 
 RUSTC ?= $(shell readlink -f $(SYSROOT)/bin/rustc)
 CARGO ?= $(shell which cargo)
-RUST_PNACL_TRANS ?= $(shell readlink -f $(SYSROOT)/bin/rust-pnacl-trans)
+RUST_PNACL_TRANS ?= $(shell readlink -f $(SYSROOT)/bin/rust_pnacl_trans)
 
 NACL_SDK_ROOT  ?= $(shell readlink -f $(NACL_SDK_ROOT))
 
@@ -15,9 +15,9 @@ endif
 
 export NACL_SDK_ROOT
 
-CC  :=$(shell $(NACL_SDK_ROOT)/tools/nacl_config.py -t pnacl --tool cc)
-CXX :=$(shell $(NACL_SDK_ROOT)/tools/nacl_config.py -t pnacl --tool cxx)
-AR  :=$(shell $(NACL_SDK_ROOT)/tools/nacl_config.py -t pnacl --tool ar)
+CC_le32_unknown_nacl  :=$(shell $(NACL_SDK_ROOT)/tools/nacl_config.py -t pnacl --tool cc)
+CXX_le32_unknown_nacl :=$(shell $(NACL_SDK_ROOT)/tools/nacl_config.py -t pnacl --tool cxx)
+AR_le32_unknown_nacl  :=$(shell $(NACL_SDK_ROOT)/tools/nacl_config.py -t pnacl --tool ar)
 export CC
 export CXX
 export AR
@@ -39,16 +39,24 @@ INDEX_FILE ?= index.html
 
 ifeq ($(USE_DEBUG),0)
 
-RUSTFLAGS += -O --cfg ndebug
+CARGO_BUILD_FLAGS += --release
 
-MAIN_TARGET := $(BUILD_DIR)/pnacl-hello-world.pexe
+MAIN_SOURCE := $(BUILD_DIR)/release/pnacl-hello-world.pexe
+MAIN_TARGET := $(BUILD_DIR)/release/pnacl-hello-world.stamp
+
+$(MAIN_TARGET): $(MAIN_SOURCE)
+	$(TOOLCHAIN)/bin/pnacl-compress $<
+	touch $@
 
 else
 
-RUSTFLAGS += --debuginfo=2 -Z no-opt
+RUSTFLAGS += --debuginfo=2
 
-MAIN_TARGET := $(BUILD_DIR)/pnacl-hello-world.nexe
+MAIN_SOURCE := $(BUILD_DIR)/debug/pnacl_hello_world.debug.pexe
+MAIN_TARGET := $(BUILD_DIR)/debug/pnacl-hello-world.nexe
 
+$(MAIN_TARGET): $(MAIN_SOURCE) $(RUST_PNACL_TRANS)
+	$(RUST_PNACL_TRANS) -o $@ $< --cross-path=$(NACL_SDK_ROOT)
 endif
 
 PORT ?= 5103
@@ -59,7 +67,7 @@ rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subs
 
 .DEFAULT_GOAL := all
 
-all: $(BUILD_DIR)/pnacl-hello-world.pexe $(BUILD_DIR)/pnacl-hello-world.nexe
+all: $(MAIN_TARGET)
 
 clean:
 	$(CARGO) clean
@@ -72,12 +80,5 @@ $(BOZOHTTPD_PID):
 serve: $(MAIN_TARGET) | $(BOZOHTTPD_PID)
 	google-chrome "http://localhost:$(PORT)/$(INDEX_FILE)"
 
-$(BUILD_DIR)/pnacl-hello-world.pexe: $(BUILD_DIR)/pnacl-hello-world.stamp | $(BUILD_DIR)/pnacl-hello-world.nexe
-	$(TOOLCHAIN)/bin/pnacl-compress $@
-
-$(BUILD_DIR)/pnacl-hello-world.stamp: src/main.rs $(CARGO) Makefile
+$(MAIN_SOURCE): src/main.rs $(CARGO) Makefile
 	$(CARGO) build --target $(TARGET) $(CARGO_BUILD_FLAGS)
-	touch $@
-
-$(BUILD_DIR)/pnacl-hello-world.nexe: $(BUILD_DIR)/pnacl-hello-world.pexe $(RUST_PNACL_TRANS)
-	$(RUST_PNACL_TRANS) -o $@ $< --cross-path=$(NACL_SDK_ROOT)
